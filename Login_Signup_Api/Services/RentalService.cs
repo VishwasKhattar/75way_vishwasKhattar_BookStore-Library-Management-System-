@@ -130,7 +130,7 @@ namespace BookstoreAPI.Services
                     {
                         cmd.CommandType = System.Data.CommandType.Text;
 
-                        // ExecuteScalarAsync is used to retrieve a single value
+                        
                         var totalBooksRented = await cmd.ExecuteScalarAsync();
 
                         return (int)totalBooksRented;
