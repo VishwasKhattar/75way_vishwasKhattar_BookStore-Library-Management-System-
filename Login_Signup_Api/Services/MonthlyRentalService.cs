@@ -24,16 +24,16 @@ namespace Login_Signup_Api.Services
         }
 
         //Service to directly add the book price to the current revenue of the month
-        public async Task AddMonthlyRevenue (int bookId , int month)
+        public async Task AddMonthlyRevenue (int bookId , int months)
         {
             try
             {
-                BookModel data = new BookModel();
+                BookModel data = new();
                 data = await _bookService.GetBookById(bookId);
 
                 var price = data.Price;
 
-                bool checkMonth = MonthExist(month);
+                bool checkMonth = MonthExist(months);
 
                 if (checkMonth)
                 {
@@ -45,20 +45,21 @@ namespace Login_Signup_Api.Services
                         {
                             cmd.CommandType = System.Data.CommandType.Text;
                             cmd.Parameters.AddWithValue("@price", price);
+                            cmd.Parameters.AddWithValue("@CurrentMonth", months);
                             cmd.ExecuteNonQuery();
                         }
                     }
                 }
                 else
                 {
-                    string sql = "Insert into MonthlyRentals(month , revenue) values(@month , @revenue);";
+                    string sql = "Insert into MonthlyRentals(months , revenue) values(@month , @revenue);";
                     using(var conn = new SqlConnection(_db.GetConnectionString()))
                     {
                         conn.Open();
                         using(var cmd = new SqlCommand(sql, conn))
                         {
                             cmd.CommandType = System.Data.CommandType.Text;
-                            cmd.Parameters.AddWithValue("@month", month);
+                            cmd.Parameters.AddWithValue("@month", months);
                             cmd.Parameters.AddWithValue("@revenue", price);
                             cmd.ExecuteNonQuery();
                         }
@@ -72,7 +73,7 @@ namespace Login_Signup_Api.Services
             
         }
 
-        private bool MonthExist(int month)
+        private bool MonthExist(int months)
         {
             try
             {
@@ -84,7 +85,7 @@ namespace Login_Signup_Api.Services
                     using (var cmd = new SqlCommand(sql, conn))
                     {
                         cmd.CommandType = System.Data.CommandType.Text;
-                        cmd.Parameters.AddWithValue("@month", month);
+                        cmd.Parameters.AddWithValue("@month", months);
                         result = cmd.ExecuteNonQuery();
                     }
                 }

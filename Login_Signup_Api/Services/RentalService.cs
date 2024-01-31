@@ -14,7 +14,7 @@ namespace BookstoreAPI.Services
 {
     public interface IRentalService
     {
-        Task RentBook(string userId, int bookId); //To rent a book
+        Task<bool> RentBook(RentDto rentDto); //To rent a book
         Task<int> GetRentalsLastMonth(); // to get last month Rentals
         Task<int> CalculatePenalty(int rentalId);// To calculate penalty by rental id
         Task<int> GetRevenueLastMonth(); // To get Last month Revenue
@@ -38,12 +38,13 @@ namespace BookstoreAPI.Services
 
         //Service method to rent a book to a user
 
-        public async Task RentBook(string userId, int bookId)
+        public async Task<bool> RentBook(RentDto rentDto)
         {
             try
             {
+
                 // Check if the book is available for rent
-                var book = await _bookService.GetBookById(bookId);
+                var book = await _bookService.GetBookById(rentDto.BookId);
 
                 if (book == null)
                 {
@@ -56,19 +57,18 @@ namespace BookstoreAPI.Services
                 }
 
                 // Update book quantity (decrease by 1)
-                await _bookService.UpdateBookQuantity(bookId, book.Quantity - 1);
+                await _bookService.UpdateBookQuantity(rentDto.BookId, book.Quantity - 1);
 
                 //Update times rented part in books table
-                await _bookService.UpdateBookTimesRented(bookId, book.TimesRented + 1);
+                await _bookService.UpdateBookTimesRented(rentDto.BookId, book.TimesRented + 1);
 
-                //Update Monthly rental for the rented book id
-                await _monthlyRentalService.AddMonthlyRevenue(bookId, DateTime.Now.Month);
+                
 
                 //Creating a new object to pass in insert rental record method
                 var rental = new RentalDto
                 {
-                    UserId = userId,
-                    BookId = bookId,
+                    UserId = rentDto.UserId,
+                    BookId = rentDto.BookId,
                     RentalDate = DateTime.Now,
                     ReturnDate = DateTime.Now.AddDays(5),
                     PenaltyAmount = 0
@@ -76,6 +76,11 @@ namespace BookstoreAPI.Services
 
                 
                 await InsertRentalRecord(rental);
+
+                //Update Monthly rental for the rented book id
+                await _monthlyRentalService.AddMonthlyRevenue(rentDto.BookId, DateTime.Now.Month);
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -233,7 +238,8 @@ namespace BookstoreAPI.Services
             {
                 int revenueLastMonth = 0;
                 int monthToCheck = DateTime.Now.Month - 1;
-                string sql = "Select revenue from MonthlyRentals where month = @month;";
+
+                string sql = "Select revenue from MonthlyRentals where months = @month;";
                 using(var conn = new SqlConnection(_db.GetConnectionString()))
                 {
                     conn.Open();
@@ -241,7 +247,7 @@ namespace BookstoreAPI.Services
                     {
                         cmd.CommandType = System.Data.CommandType.Text;
                         cmd.Parameters.AddWithValue("@month", monthToCheck);
-                        revenueLastMonth = (int)cmd.ExecuteScalar();
+                        revenueLastMonth = Convert.ToInt32(cmd.ExecuteScalar());
                     }
                 }
                 return revenueLastMonth;

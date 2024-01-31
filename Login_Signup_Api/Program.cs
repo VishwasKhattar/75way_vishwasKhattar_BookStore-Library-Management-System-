@@ -78,6 +78,17 @@ builder.Services.AddScoped<IBookService , BookService>();
 builder.Services.AddScoped<IRentalService , RentalService>();
 builder.Services.AddScoped<IMonthlyRentalService, MonthlyRentalService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", builder =>
+        builder.WithOrigins("https://yourdomain.com")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
+});
+
+// Add this inside Configure method in Startup.cs, before UseEndpoints
+
 
 var app = builder.Build();
 
@@ -90,7 +101,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseCors("AllowSpecificOrigin");
 app.MapControllers();
 
 app.Run();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BookstoreAPI.Models;
 using BookstoreAPI.Services;
+using Login_Signup_Api.Dto;
 using Login_Signup_Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,11 +28,11 @@ namespace BookstoreAPI.Controllers
         //1. Route to rent a book
 
         [HttpPost("/rentBook")]
-        public async Task<IActionResult> RentBook(string userId, int bookId)
+        public async Task<IActionResult> RentBook([FromBody]  RentDto rentDto)
         {
             try
             {
-                await _rentalService.RentBook(userId, bookId);
+                var data = await _rentalService.RentBook(rentDto);
                 return Ok(new { status = true, message = "Book rented successfully" });
             }
             catch (Exception ex)
